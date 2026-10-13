@@ -1,0 +1,43 @@
+databases:
+  - name: student-management-db
+    databaseName: studentms
+    user: studentms
+    plan: free
+
+services:
+  - type: web
+    name: student-management-api
+    runtime: docker
+    rootDir: studentms-backend
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /v3/api-docs
+    plan: free
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: DB_HOST
+        fromDatabase:
+          name: student-management-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: student-management-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: student-management-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: student-management-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: student-management-db
+          property: password
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FRONTEND_HOST
+        sync: false
+      - key: UPLOAD_DIR
+        value: /tmp/profile-pictures

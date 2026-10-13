@@ -50,7 +50,7 @@ recycle bin, profile photo uploads, CSV export, and full light/dark mode support
 | State      | TanStack Query (React Query), Axios                     |
 | UI         | Tailwind CSS v4, Heroicons, Recharts, React Toastify    |
 | Forms      | React Hook Form + Yup                                   |
-| Database   | MySQL (production) / H2 (development)                   |
+| Database   | PostgreSQL (production) / H2 (local development)        |
 | Build      | Maven (backend), npm (frontend)                         |
 
 ---
@@ -84,7 +84,7 @@ student-management-system/
 ### Prerequisites
 - Java 17 or higher
 - Node.js 18 and npm
-- MySQL (for production) — not required if using H2
+- PostgreSQL (for production) — not required for local H2 development
 
 ### 1. Clone the repository
 
@@ -99,8 +99,7 @@ cd student-management-system
 
 ```bash
 cd studentms-backend
-# In application.properties, set:
-# spring.profiles.active=h2
+# H2 is the default profile unless SPRING_PROFILES_ACTIVE is set.
 ./mvnw spring-boot:run
 ```
 
@@ -156,6 +155,51 @@ Frontend runs on `http://localhost:5173`.
 
 ---
 
+## Deploying to Render and Vercel
+
+The Render Blueprint (`render.yaml`) provisions the PostgreSQL database and Spring
+Boot API. Deploy the Vite frontend separately to Vercel.
+
+### 1. Deploy the backend and database to Render
+
+1. Push the project to GitHub.
+2. In Render, choose **New + → Blueprint** and connect this repository.
+3. Review and create the PostgreSQL database and API. The Blueprint selects the
+   `prod` Spring profile and generates `JWT_SECRET`; the database credentials are
+   wired from the Render PostgreSQL service.
+4. Note the public URL for `student-management-api`.
+
+The production profile uses PostgreSQL with `ddl-auto=update`, so it updates the
+schema without recreating the database. Do not run local seed or schema-creation
+scripts against the production database.
+
+### 2. Deploy the frontend to Vercel
+
+1. Import the same GitHub repository into Vercel and set the project root to
+   `studentms-frontend`.
+2. Use `npm run build` as the build command and `dist` as the output directory.
+3. Set the build-time environment variable
+   `VITE_API_BASE_URL=https://<your-render-api-host>/api`, using the Render API
+   hostname. `https://` and `/api` should both be included.
+4. Deploy and note the production Vercel origin, such as
+   `https://your-project.vercel.app`.
+
+The frontend's `vercel.json` rewrites application routes to the Vite entry point
+so React Router routes also work on direct visits and refreshes.
+
+### 3. Allow the Vercel origin in backend CORS
+
+In the Render API service's environment settings, set `FRONTEND_HOST` to the full
+Vercel origin, for example `https://your-project.vercel.app`, then redeploy the
+backend. The local Vite origin (`http://localhost:5173`) remains allowed for local
+development.
+
+Render's free services may sleep when idle, and free database availability/retention
+is limited. Uploaded profile photos use temporary container storage and can be lost
+when the API restarts; use persistent object storage for photos in production.
+
+---
+
 ## API Endpoints
 
 | Method | Endpoint                          | Description                  | Access              |
@@ -188,12 +232,17 @@ Full OpenAPI spec available at `/swagger-ui.html` after backend starts.
 
 | Property                  | Description                        |
 |---------------------------|------------------------------------|
-| spring.profiles.active    | `h2` or `mysql`                    |
+| spring.profiles.default   | `h2` (used when no active profile is set) |
+| SPRING_PROFILES_ACTIVE    | `prod` on Render                  |
 | jwt.secret                | Secret key for signing JWT tokens  |
 | jwt.expiration            | Token expiry in ms (default 86400000 = 1 day) |
 | file.upload-dir           | Directory for storing profile photos |
 
-### Frontend (`.env`)
+Production PostgreSQL connection settings are supplied by Render as `DB_HOST`,
+`DB_PORT`, `DB_NAME`, `DB_USER`, and `DB_PASSWORD`. Render generates `JWT_SECRET`;
+set `FRONTEND_HOST` manually to the Vercel origin as described above.
+
+### Frontend (`.env` locally; Vercel environment in production)
 VITE_API_BASE_URL=http://localhost:8081/api
 
 ---

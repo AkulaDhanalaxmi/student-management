@@ -1,6 +1,12 @@
+export function apiBaseUrl() {
+  const configuredBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081/api'
+  const withProtocol = /^https?:\/\//i.test(configuredBase) ? configuredBase : `https://${configuredBase}`
+  const withoutTrailingSlashes = withProtocol.replace(/\/+$/, '')
+  return /\/api$/i.test(withoutTrailingSlashes) ? withoutTrailingSlashes : `${withoutTrailingSlashes}/api`
+}
+
 export function apiOrigin() {
-  const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081/api'
-  return base.replace(/\/?api\/?$/i, '') || 'http://localhost:8081'
+  return apiBaseUrl().replace(/\/api$/i, '')
 }
 
 export function absolutePhotoUrl(photoUrl) {
