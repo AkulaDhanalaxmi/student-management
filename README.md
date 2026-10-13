@@ -187,12 +187,11 @@ scripts against the production database.
 The frontend's `vercel.json` rewrites application routes to the Vite entry point
 so React Router routes also work on direct visits and refreshes.
 
-### 3. Allow the Vercel origin in backend CORS
+### 3. Deploy the backend CORS configuration
 
-In the Render API service's environment settings, set `FRONTEND_HOST` to the full
-Vercel origin, for example `https://your-project.vercel.app`, then redeploy the
-backend. The local Vite origin (`http://localhost:5173`) remains allowed for local
-development.
+The backend allows `https://student-management-three-gray.vercel.app` and the local
+Vite origin (`http://localhost:5173`). Redeploy the API after backend changes so
+the Spring Security CORS policy is active in production.
 
 Render's free services may sleep when idle, and free database availability/retention
 is limited. Uploaded profile photos use temporary container storage and can be lost
@@ -239,8 +238,7 @@ Full OpenAPI spec available at `/swagger-ui.html` after backend starts.
 | file.upload-dir           | Directory for storing profile photos |
 
 Production PostgreSQL connection settings are supplied by Render as `DB_HOST`,
-`DB_PORT`, `DB_NAME`, `DB_USER`, and `DB_PASSWORD`. Render generates `JWT_SECRET`;
-set `FRONTEND_HOST` manually to the Vercel origin as described above.
+`DB_PORT`, `DB_NAME`, `DB_USER`, and `DB_PASSWORD`. Render generates `JWT_SECRET`.
 
 ### Frontend (`.env` locally; Vercel environment in production)
 VITE_API_BASE_URL=http://localhost:8081/api

@@ -37,7 +37,5 @@ services:
           property: password
       - key: JWT_SECRET
         generateValue: true
-      - key: FRONTEND_HOST
-        sync: false
       - key: UPLOAD_DIR
         value: /tmp/profile-pictures
