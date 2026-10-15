@@ -15,6 +15,8 @@ import java.util.List;
 @Repository
 public interface StudentRepository extends JpaRepository<Student, Long> {
 
+    boolean existsByEmail(String email);
+
     // Active students only
     Page<Student> findByDeletedFalse(Pageable pageable);
 

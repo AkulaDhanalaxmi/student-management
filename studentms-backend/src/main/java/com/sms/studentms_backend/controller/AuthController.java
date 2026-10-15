@@ -8,6 +8,7 @@ import com.sms.studentms_backend.entity.User;
 import com.sms.studentms_backend.repository.RoleRepository;
 import com.sms.studentms_backend.repository.UserRepository;
 import com.sms.studentms_backend.security.JwtUtil;
+import com.sms.studentms_backend.service.StudentRegistrationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +21,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import com.sms.studentms_backend.dto.StudentRegistrationRequest;
-import com.sms.studentms_backend.repository.StudentRepository;
 import jakarta.validation.Valid;
 
 import java.util.HashMap;
@@ -48,7 +48,7 @@ public class AuthController {
     private PasswordEncoder passwordEncoder;
 
     @Autowired
-    private StudentRepository studentRepository;
+    private StudentRegistrationService studentRegistrationService;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
@@ -90,26 +90,7 @@ public class AuthController {
 
     @PostMapping("/register/student")
     public ResponseEntity<?> registerStudent(@Valid @RequestBody StudentRegistrationRequest request) {
-        if (userRepository.findByUsername(request.getUsername()).isPresent()) {
-            return ResponseEntity.badRequest().body("Username already exists");
-        }
-        Role role = roleRepository.findByName("ROLE_STUDENT")
-                .orElseThrow(() -> new RuntimeException("Role STUDENT not found"));
-
-        // Create User
-        User user = new User();
-        user.setUsername(request.getUsername());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setRoles(Set.of(role));
-        user = userRepository.save(user);
-
-        // Create Student
-        Student student = new Student();
-        student.setName(request.getName());
-        student.setEmail(request.getEmail());
-        student.setDepartment(request.getDepartment());
-        student.setDeleted(false);
-        Student savedStudent = studentRepository.save(student);
+        Student savedStudent = studentRegistrationService.register(request);
 
         // Return the student ID so frontend can auto‑link
         Map<String, Object> response = new HashMap<>();
@@ -117,4 +98,4 @@ public class AuthController {
         response.put("studentId", savedStudent.getId());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
-    }
+}
